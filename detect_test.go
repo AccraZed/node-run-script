@@ -25,41 +25,69 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 		var err error
 		workingDir, err = os.MkdirTemp("", "working-dir")
 		Expect(err).NotTo(HaveOccurred())
+		os.Setenv("BP_NODE_RUN_SCRIPTS", "some run scripts")
 
 		detect = noderunscript.Detect()
 	})
 
 	it.After(func() {
+		os.Unsetenv("BP_NODE_RUN_SCRIPTS")
 		Expect(os.RemoveAll(workingDir)).To(Succeed())
 	})
 
-	context("when the working-dir contains yarn.lock", func() {
-		it("returns a plan that requires node and yarn", func() {
-			Expect(ioutil.WriteFile(filepath.Join(workingDir, "yarn.lock"), nil, 0644)).To(Succeed())
+	context("valid cases", func() {
+		context("when the working-dir contains yarn.lock", func() {
+			it("returns a plan that requires node and yarn", func() {
+				Expect(ioutil.WriteFile(filepath.Join(workingDir, "yarn.lock"), nil, 0644)).To(Succeed())
 
-			result, err := detect(packit.DetectContext{
-				WorkingDir: workingDir,
+				result, err := detect(packit.DetectContext{
+					WorkingDir: workingDir,
+				})
+				Expect(err).NotTo(HaveOccurred())
+				Expect(result.Plan).To(Equal(packit.BuildPlan{
+					Requires: []packit.BuildPlanRequirement{
+						{Name: "node"}, {Name: "yarn"},
+					},
+				}))
 			})
-			Expect(err).NotTo(HaveOccurred())
-			Expect(result.Plan).To(Equal(packit.BuildPlan{
-				Requires: []packit.BuildPlanRequirement{
-					{Name: "node"}, {Name: "yarn"},
-				},
-			}))
+		})
+
+		context("when the working-dir doesn't contain yarn.lock", func() {
+			it("defaults to npm and returns a plan that requires node and npm", func() {
+				result, err := detect(packit.DetectContext{
+					WorkingDir: workingDir,
+				})
+				Expect(err).NotTo(HaveOccurred())
+				Expect(result.Plan).To(Equal(packit.BuildPlan{
+					Requires: []packit.BuildPlanRequirement{
+						{Name: "node"}, {Name: "npm"},
+					},
+				}))
+			})
 		})
 	})
 
-	context("when the working-dir doesn't contain yarn.lock", func() {
-		it("defaults to npm and returns a plan that requires node and npm", func() {
-			result, err := detect(packit.DetectContext{
-				WorkingDir: "/working-dir",
+	context("failure cases", func() {
+
+		context("when the env var of \"$BP_NODE_RUN_SCRIPTS\" is not set", func() {
+			it.Before(func() {
+				os.Unsetenv("BP_NODE_RUN_SCRIPTS")
 			})
-			Expect(err).NotTo(HaveOccurred())
-			Expect(result.Plan).To(Equal(packit.BuildPlan{
-				Requires: []packit.BuildPlanRequirement{
-					{Name: "node"}, {Name: "npm"},
-				},
-			}))
+			it("returns an error", func() {
+				_, err := detect(packit.DetectContext{
+					WorkingDir: workingDir,
+				})
+
+				Expect(err).To(MatchError("environment variable $BP_NODE_RUN_SCRIPTS is not set"))
+			})
+		})
+
+		context("if package.json is absent", func() {
+
+		})
+
+		context("if any of the scripts in \"$BP_NODE_RUN_SCRIPTS\" does not exist in package.json", func() {
+
 		})
 	})
 
