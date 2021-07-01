@@ -1,11 +1,13 @@
 package noderunscript_test
 
 import (
-	"testing"
+	"io/ioutil"
 	"os"
+	"path/filepath"
+	"testing"
 
-	"github.com/paketo-buildpacks/packit"
 	noderunscript "github.com/accrazed/node-run-script"
+	"github.com/paketo-buildpacks/packit"
 	"github.com/sclevine/spec"
 
 	. "github.com/onsi/gomega"
@@ -33,6 +35,16 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		workingDir, err = os.MkdirTemp("", "working-dir")
 		Expect(err).NotTo(HaveOccurred())
 
+		os.Setenv("BP_NODE_RUN_SCRIPTS", "build,some-script")
+		Expect(ioutil.WriteFile(filepath.Join(workingDir, "package.json"), []byte(`
+			{
+				"name": "mypackage",
+				"scripts": {
+				   "build": "mybuildcommand --args",
+				   "some-script": "somecommands --args",
+				}
+			}`), 0644)).To(Succeed())
+
 		build = noderunscript.Build()
 	})
 
@@ -43,6 +55,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 	})
 
 	it("returns a result that builds correctly", func() {
+
 		result, err := build(packit.BuildContext{
 			WorkingDir: workingDir,
 			CNBPath:    cnbDir,
@@ -63,6 +76,20 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 				Entries: nil,
 			},
 			Layers: nil,
+			Launch: packit.LaunchMetadata{
+				Processes: []packit.Process{
+					{
+						Type:    "node-run-script",
+						Command: "yarn",
+						Args:    []string{"run", "my-buildcommand", "--args"},
+					},
+					{
+						Type:    "node-run-script",
+						Command: "npm",
+						Args:    []string{"run-script", "somecommands", "--args"},
+					},
+				},
+			},
 		}))
 
 	})

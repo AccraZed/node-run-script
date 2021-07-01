@@ -43,35 +43,33 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 		Expect(os.RemoveAll(workingDir)).To(Succeed())
 	})
 
-	context("valid cases", func() {
-		context("when the working-dir contains yarn.lock", func() {
-			it("returns a plan that requires node and yarn", func() {
-				Expect(ioutil.WriteFile(filepath.Join(workingDir, "yarn.lock"), nil, 0644)).To(Succeed())
+	context("when the working-dir contains yarn.lock", func() {
+		it("returns a plan that requires node and yarn", func() {
+			Expect(ioutil.WriteFile(filepath.Join(workingDir, "yarn.lock"), nil, 0644)).To(Succeed())
 
-				result, err := detect(packit.DetectContext{
-					WorkingDir: workingDir,
-				})
-				Expect(err).NotTo(HaveOccurred())
-				Expect(result.Plan).To(Equal(packit.BuildPlan{
-					Requires: []packit.BuildPlanRequirement{
-						{Name: "node"}, {Name: "yarn"},
-					},
-				}))
+			result, err := detect(packit.DetectContext{
+				WorkingDir: workingDir,
 			})
+			Expect(err).NotTo(HaveOccurred())
+			Expect(result.Plan).To(Equal(packit.BuildPlan{
+				Requires: []packit.BuildPlanRequirement{
+					{Name: "node"}, {Name: "yarn"},
+				},
+			}))
 		})
+	})
 
-		context("when the working-dir doesn't contain yarn.lock", func() {
-			it("defaults to npm and returns a plan that requires node and npm", func() {
-				result, err := detect(packit.DetectContext{
-					WorkingDir: workingDir,
-				})
-				Expect(err).NotTo(HaveOccurred())
-				Expect(result.Plan).To(Equal(packit.BuildPlan{
-					Requires: []packit.BuildPlanRequirement{
-						{Name: "node"}, {Name: "npm"},
-					},
-				}))
+	context("when the working-dir doesn't contain yarn.lock", func() {
+		it("defaults to npm and returns a plan that requires node and npm", func() {
+			result, err := detect(packit.DetectContext{
+				WorkingDir: workingDir,
 			})
+			Expect(err).NotTo(HaveOccurred())
+			Expect(result.Plan).To(Equal(packit.BuildPlan{
+				Requires: []packit.BuildPlanRequirement{
+					{Name: "node"}, {Name: "npm"},
+				},
+			}))
 		})
 	})
 
@@ -80,6 +78,7 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 			it.Before(func() {
 				os.Unsetenv("BP_NODE_RUN_SCRIPTS")
 			})
+
 			it("returns a failure", func() {
 				_, err := detect(packit.DetectContext{
 					WorkingDir: workingDir,
@@ -121,8 +120,6 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 
 				Expect(err).To(MatchError("one of the scripts in $BP_NODE_RUN_SCRIPTS does not exist in package.json"))
 			})
-
 		})
 	})
-
 }
