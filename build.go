@@ -17,7 +17,7 @@ type Executable interface {
 	Execute(execution pexec.Execution) error
 }
 
-func Build(npmExec Executable, yarnExec Executable, clock chronos.Clock, logger scribe.Logger) packit.BuildFunc {
+func Build(npmExec Executable, yarnExec Executable, scriptManager PackageInterface, clock chronos.Clock, logger scribe.Logger) packit.BuildFunc {
 	return func(context packit.BuildContext) (packit.BuildResult, error) {
 		logger.Title("%s %s", context.BuildpackInfo.Name, context.BuildpackInfo.Version)
 
@@ -30,14 +30,14 @@ func Build(npmExec Executable, yarnExec Executable, clock chronos.Clock, logger 
 			Stderr: buffer,
 		}
 
-		packageManager := getPackageManager(context.WorkingDir)
+		packageManager := scriptManager.GetPackageManager(context.WorkingDir)
 
 		if packageManager == "yarn" {
 			mainExecutable = yarnExec
 			execution.Args[0] = "run"
 		}
 
-		packageScripts, err := getPackageScripts(context.WorkingDir)
+		packageScripts, err := scriptManager.GetPackageScripts(context.WorkingDir)
 		if err != nil {
 			return packit.BuildResult{}, err
 		}

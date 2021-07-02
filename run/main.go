@@ -13,10 +13,11 @@ import (
 func main() {
 	npmExec := pexec.NewExecutable("npm")
 	yarnExec := pexec.NewExecutable("yarn")
+	scriptManager := noderunscript.CreateScriptManager()
 	logger := scribe.NewLogger(os.Stdout)
 
 	packit.Run(
-		noderunscript.Detect(),
-		noderunscript.Build(npmExec, yarnExec, chronos.DefaultClock, logger),
+		noderunscript.Detect(scriptManager),
+		noderunscript.Build(npmExec, yarnExec, scriptManager, chronos.DefaultClock, logger),
 	)
 }

@@ -27,10 +27,11 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 
 		build packit.BuildFunc
 
-		timestamp time.Time
-		logger    scribe.Logger
-		npmExec   *fakes.Executable
-		yarnExec  *fakes.Executable
+		timestamp     time.Time
+		logger        scribe.Logger
+		npmExec       *fakes.Executable
+		yarnExec      *fakes.Executable
+		scriptManager *fakes.PackageInterface
 	)
 
 	it.Before(func() {
@@ -61,8 +62,10 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 
 		npmExec = &fakes.Executable{}
 		yarnExec = &fakes.Executable{}
+		scriptManager = &fakes.PackageInterface{}
 		logger = scribe.NewLogger(os.Stdout)
-		build = noderunscript.Build(npmExec, yarnExec, clock, logger)
+
+		build = noderunscript.Build(npmExec, yarnExec, scriptManager, clock, logger)
 	})
 
 	it.After(func() {
@@ -74,6 +77,12 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 	context("when there is no yarn.lock", func() {
 		it("runs npm commands", func() {
 			npmExec.ExecuteCall.Returns.Error = nil
+
+			scriptManager.GetPackageManagerCall.Returns.String = "npm"
+			scriptManager.GetPackageScriptsCall.Returns.MapStringString = map[string]string{
+				"build":       "mybuildcommand --args",
+				"some-script": "somecommands --args",
+			}
 
 			_, err := build(packit.BuildContext{
 				WorkingDir: workingDir,
@@ -90,10 +99,10 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 			})
 			Expect(err).NotTo(HaveOccurred())
 
+			Expect(npmExec.ExecuteCall.CallCount).To(Equal(2))
 			Expect(npmExec.ExecuteCall.Receives.Execution.Args).To(
 				Equal([]string{"run-script", "somecommands", "--args"}))
 			Expect(npmExec.ExecuteCall.Receives.Execution.Dir).To(Equal(workingDir))
-			Expect(npmExec.ExecuteCall.CallCount).To(Equal(2))
 		})
 	})
 
@@ -117,10 +126,10 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 			})
 			Expect(err).NotTo(HaveOccurred())
 
+			Expect(yarnExec.ExecuteCall.CallCount).To(Equal(2))
 			Expect(yarnExec.ExecuteCall.Receives.Execution.Args).To(
 				Equal([]string{"run", "somecommands", "--args"}))
 			Expect(yarnExec.ExecuteCall.Receives.Execution.Dir).To(Equal(workingDir))
-			Expect(yarnExec.ExecuteCall.CallCount).To(Equal(2))
 		})
 	})
 }

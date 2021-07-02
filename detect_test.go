@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	noderunscript "github.com/accrazed/node-run-script"
+	"github.com/accrazed/node-run-script/fakes"
 	"github.com/paketo-buildpacks/packit"
 	"github.com/sclevine/spec"
 
@@ -16,9 +17,10 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 	var (
 		Expect = NewWithT(t).Expect
 
-		workingDir string
-		customPath string
-		detect     packit.DetectFunc
+		workingDir    string
+		customPath    string
+		detect        packit.DetectFunc
+		scriptManager *fakes.PackageInterface
 	)
 
 	it.Before(func() {
@@ -39,7 +41,9 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 				}
 			}`), 0644)).To(Succeed())
 
-		detect = noderunscript.Detect()
+		scriptManager = &fakes.PackageInterface{}
+
+		detect = noderunscript.Detect(scriptManager)
 	})
 
 	it.After(func() {

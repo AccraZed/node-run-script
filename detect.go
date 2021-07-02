@@ -10,7 +10,7 @@ import (
 	"github.com/paketo-buildpacks/packit"
 )
 
-func Detect() packit.DetectFunc {
+func Detect(scriptManager PackageInterface) packit.DetectFunc {
 	return func(context packit.DetectContext) (packit.DetectResult, error) {
 		envRunScripts, exists := os.LookupEnv("BP_NODE_RUN_SCRIPTS")
 		if !exists {
@@ -40,7 +40,7 @@ func Detect() packit.DetectFunc {
 				packit.Fail.WithMessage("expected file package.json to exist")
 		}
 
-		packageScripts, err := getPackageScripts(projectDir)
+		packageScripts, err := scriptManager.GetPackageScripts(projectDir)
 		if err != nil {
 			return packit.DetectResult{}, err
 		}
@@ -54,7 +54,7 @@ func Detect() packit.DetectFunc {
 			}
 		}
 
-		lockName := getPackageManager(projectDir)
+		lockName := scriptManager.GetPackageManager(projectDir)
 
 		return packit.DetectResult{
 			Plan: packit.BuildPlan{
