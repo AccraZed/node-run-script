@@ -1,6 +1,7 @@
 package noderunscript
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -14,16 +15,32 @@ func Detect() packit.DetectFunc {
 		envRunScripts, exists := os.LookupEnv("BP_NODE_RUN_SCRIPTS")
 		if !exists {
 			return packit.DetectResult{},
-				packit.Fail.WithMessage("environment variable $BP_NODE_RUN_SCRIPTS is not set")
+				packit.Fail.WithMessage("expected value from $BP_NODE_RUN_SCRIPTS to be set")
 		}
 
-		_, err := os.Stat(filepath.Join(context.WorkingDir, "package.json"))
+		projectDir := context.WorkingDir
+		bpNodeProjectPath, exists := os.LookupEnv("BP_NODE_PROJECT_PATH")
+		if exists {
+			projectDir = filepath.Join(context.WorkingDir, bpNodeProjectPath)
+		}
+
+		projectDir = filepath.Clean(projectDir)
+		_, err := os.Stat(projectDir)
+		if err != nil {
+			if errors.Is(err, os.ErrNotExist) {
+				return packit.DetectResult{},
+					fmt.Errorf("expected value from $BP_NODE_PROJECT_PATH [%s] to be an existing directory", projectDir)
+			}
+			return packit.DetectResult{}, err
+		}
+
+		_, err = os.Stat(filepath.Join(projectDir, "package.json"))
 		if err != nil {
 			return packit.DetectResult{},
-				packit.Fail.WithMessage("file package.json does not exist")
+				packit.Fail.WithMessage("expected file package.json to exist")
 		}
 
-		packageScripts, err := getPackageScripts(context.WorkingDir)
+		packageScripts, err := getPackageScripts(projectDir)
 		if err != nil {
 			return packit.DetectResult{}, err
 		}
@@ -33,11 +50,11 @@ func Detect() packit.DetectFunc {
 		for _, envScriptName := range envScriptNames {
 			if _, exists := packageScripts[envScriptName]; !exists {
 				return packit.DetectResult{},
-					fmt.Errorf("one of the scripts in $BP_NODE_RUN_SCRIPTS does not exist in package.json")
+					fmt.Errorf("expected a script from $BP_NODE_RUN_SCRIPTS to exist in package.json")
 			}
 		}
 
-		lockName := getPackageManager(context.WorkingDir)
+		lockName := getPackageManager(projectDir)
 
 		return packit.DetectResult{
 			Plan: packit.BuildPlan{

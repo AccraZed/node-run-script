@@ -45,7 +45,7 @@ func Build(npmExec Executable, yarnExec Executable, clock chronos.Clock, logger 
 		envRunScripts, exists := os.LookupEnv("BP_NODE_RUN_SCRIPTS")
 		if !exists {
 			return packit.BuildResult{},
-				packit.Fail.WithMessage("environment variable $BP_NODE_RUN_SCRIPTS is not set")
+				packit.Fail.WithMessage("expected value from $BP_NODE_RUN_SCRIPTS to be set")
 		}
 
 		envScriptNames := strings.Split(envRunScripts, ",")
@@ -62,7 +62,6 @@ func Build(npmExec Executable, yarnExec Executable, clock chronos.Clock, logger 
 
 		duration, err := clock.Measure(func() error {
 			for _, script := range scripts {
-
 				logger.Action("Running '%s %s %s'", packageManager, execution.Args[0], script)
 				args := strings.Split(script, " ")
 
@@ -72,9 +71,10 @@ func Build(npmExec Executable, yarnExec Executable, clock chronos.Clock, logger 
 				err = mainExecutable.Execute(execution)
 
 				if err != nil {
-					// TODO: return/bail out if execution fails?
 					logger.Detail("%s", buffer.String())
 					buffer.Reset()
+
+					return err
 				}
 			}
 			return nil
