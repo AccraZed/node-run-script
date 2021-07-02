@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/paketo-buildpacks/packit"
+	"github.com/paketo-buildpacks/packit/chronos"
 	"github.com/paketo-buildpacks/packit/pexec"
 	"github.com/paketo-buildpacks/packit/scribe"
 )
@@ -15,9 +17,10 @@ type Executable interface {
 	Execute(execution pexec.Execution) error
 }
 
-func Build(npmExec Executable, yarnExec Executable) packit.BuildFunc {
+func Build(npmExec Executable, yarnExec Executable, clock chronos.Clock, logger scribe.Logger) packit.BuildFunc {
 	return func(context packit.BuildContext) (packit.BuildResult, error) {
-		logger := scribe.NewLogger(os.Stdout)
+		logger.Title("%s %s", context.BuildpackInfo.Name, context.BuildpackInfo.Version)
+
 		buffer := bytes.NewBuffer(nil)
 		mainExecutable := npmExec
 		execution := pexec.Execution{
@@ -54,21 +57,34 @@ func Build(npmExec Executable, yarnExec Executable) packit.BuildFunc {
 			}
 		}
 
-		for _, script := range scripts {
+		logger.Process("Executing build process")
+		logger.Subprocess("Executing scripts")
 
-			logger.Subprocess("Running '%s %s %s'", packageManager, execution.Args[0], script)
-			args := strings.Split(script, " ")
+		duration, err := clock.Measure(func() error {
+			for _, script := range scripts {
 
-			execution.Args = execution.Args[:1]
-			execution.Args = append(execution.Args, args...)
+				logger.Action("Running '%s %s %s'", packageManager, execution.Args[0], script)
+				args := strings.Split(script, " ")
 
-			err = mainExecutable.Execute(execution)
+				execution.Args = execution.Args[:1]
+				execution.Args = append(execution.Args, args...)
 
-			if err != nil {
-				logger.Subprocess("%s", buffer.String())
-				buffer.Reset()
+				err = mainExecutable.Execute(execution)
+
+				if err != nil {
+					// TODO: return/bail out if execution fails?
+					logger.Detail("%s", buffer.String())
+					buffer.Reset()
+				}
 			}
+			return nil
+		})
+		if err != nil {
+			return packit.BuildResult{}, nil
 		}
+
+		logger.Action("Completed in %s", duration.Round(time.Millisecond))
+		logger.Break()
 
 		return packit.BuildResult{}, nil
 	}

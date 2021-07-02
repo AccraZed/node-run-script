@@ -5,10 +5,13 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	noderunscript "github.com/accrazed/node-run-script"
 	"github.com/accrazed/node-run-script/fakes"
 	"github.com/paketo-buildpacks/packit"
+	"github.com/paketo-buildpacks/packit/chronos"
+	"github.com/paketo-buildpacks/packit/scribe"
 	"github.com/sclevine/spec"
 
 	. "github.com/onsi/gomega"
@@ -24,8 +27,10 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 
 		build packit.BuildFunc
 
-		npmExec  *fakes.Executable
-		yarnExec *fakes.Executable
+		timestamp time.Time
+		logger    scribe.Logger
+		npmExec   *fakes.Executable
+		yarnExec  *fakes.Executable
 	)
 
 	it.Before(func() {
@@ -49,9 +54,15 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 				}
 			}`), 0644)).To(Succeed())
 
+		timestamp = time.Now()
+		clock := chronos.NewClock(func() time.Time {
+			return timestamp
+		})
+
 		npmExec = &fakes.Executable{}
 		yarnExec = &fakes.Executable{}
-		build = noderunscript.Build(npmExec, yarnExec)
+		logger = scribe.NewLogger(os.Stdout)
+		build = noderunscript.Build(npmExec, yarnExec, clock, logger)
 	})
 
 	it.After(func() {
