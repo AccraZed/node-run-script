@@ -25,7 +25,7 @@ func Build(npmExec Executable, yarnExec Executable, scriptManager PackageInterfa
 		mainExecutable := npmExec
 		execution := pexec.Execution{
 			Dir:    context.WorkingDir,
-			Args:   []string{"run-script"},
+			Args:   []string{"run-script", ""},
 			Stdout: buffer,
 			Stderr: buffer,
 		}
@@ -52,8 +52,8 @@ func Build(npmExec Executable, yarnExec Executable, scriptManager PackageInterfa
 
 		var scripts []string
 		for _, envScriptName := range envScriptNames {
-			if args, exists := packageScripts[envScriptName]; exists {
-				scripts = append(scripts, args)
+			if _, exists := packageScripts[envScriptName]; exists {
+				scripts = append(scripts, envScriptName)
 			}
 		}
 
@@ -63,17 +63,14 @@ func Build(npmExec Executable, yarnExec Executable, scriptManager PackageInterfa
 		duration, err := clock.Measure(func() error {
 			for _, script := range scripts {
 				logger.Action("Running '%s %s %s'", packageManager, execution.Args[0], script)
-				args := strings.Split(script, " ")
 
-				execution.Args = execution.Args[:1]
-				execution.Args = append(execution.Args, args...)
-
+				execution.Args[1] = script
 				err = mainExecutable.Execute(execution)
 
-				if err != nil {
-					logger.Detail("%s", buffer.String())
-					buffer.Reset()
+				logger.Detail("%s", buffer.String())
+				buffer.Reset()
 
+				if err != nil {
 					return err
 				}
 			}

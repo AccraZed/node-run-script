@@ -50,8 +50,8 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 			{
 				"name": "mypackage",
 				"scripts": {
-				   "build": "mybuildcommand --args",
-				   "some-script": "somecommands --args"
+				   "build": "echo \"script build running!\"",
+				   "some-script": "echo \"script some-script running!\""
 				}
 			}`), 0644)).To(Succeed())
 
@@ -80,8 +80,8 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 
 			scriptManager.GetPackageManagerCall.Returns.String = "npm"
 			scriptManager.GetPackageScriptsCall.Returns.MapStringString = map[string]string{
-				"build":       "mybuildcommand --args",
-				"some-script": "somecommands --args",
+				"build":       "echo \"script build running!\"",
+				"some-script": "echo \"script some-script running!\"",
 			}
 
 			_, err := build(packit.BuildContext{
@@ -101,7 +101,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 
 			Expect(npmExec.ExecuteCall.CallCount).To(Equal(2))
 			Expect(npmExec.ExecuteCall.Receives.Execution.Args).To(
-				Equal([]string{"run-script", "somecommands", "--args"}))
+				Equal([]string{"run-script", "some-script"}))
 			Expect(npmExec.ExecuteCall.Receives.Execution.Dir).To(Equal(workingDir))
 		})
 	})
@@ -113,8 +113,8 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 
 			scriptManager.GetPackageManagerCall.Returns.String = "yarn"
 			scriptManager.GetPackageScriptsCall.Returns.MapStringString = map[string]string{
-				"build":       "mybuildcommand --args",
-				"some-script": "somecommands --args",
+				"build":       "echo \"script build running!\"",
+				"some-script": "echo \"script some-script running!\"",
 			}
 
 			_, err := build(packit.BuildContext{
@@ -134,7 +134,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 
 			Expect(yarnExec.ExecuteCall.CallCount).To(Equal(2))
 			Expect(yarnExec.ExecuteCall.Receives.Execution.Args).To(
-				Equal([]string{"run", "somecommands", "--args"}))
+				Equal([]string{"run", "some-script"}))
 			Expect(yarnExec.ExecuteCall.Receives.Execution.Dir).To(Equal(workingDir))
 		})
 	})
