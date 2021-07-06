@@ -1,0 +1,14 @@
+{
+  "description": "some yarn app",
+  "license": "MIT",
+  "name": "simple_yarn_app",
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "scripts": {
+    "test_script_1": "echo \"some commands\"",
+    "test_script_2": "echo \"some other commands\""
+  },
+  "version": "0.0.0"
+}

@@ -17,54 +17,79 @@ import (
 var (
 	buildpack        string
 	offlineBuildpack string
+)
 
-	buildpackInfo struct {
-		Buildpack struct {
-			ID   string
-			Name string
+var settings struct {
+	Buildpacks struct {
+		NodeEngine struct {
+			Online string
+		}
+
+		NPMInstall struct {
+			Online string
+		}
+
+		Yarn struct {
+			Online string
+		}
+		YarnInstall struct {
+			Online string
+		}
+
+		NodeRunScript struct {
+			Online string
 		}
 	}
-
-	config struct {
-		SomeBuildpack string `json:"some-buildpack"`
+	Buildpack struct {
+		ID   string
+		Name string
 	}
-)
+	Config struct {
+		NodeEngine string `json:"node-engine"`
+		NPMInstall string `json:"npm-install"`
+		NPMStart   string `json:"npm-start"`
+
+		Yarn        string `json:"yarn"`
+		YarnInstall string `json:"yarn-install"`
+	}
+}
 
 func TestIntegration(t *testing.T) {
 	Expect := NewWithT(t).Expect
 
+	file, err := os.Open("../integration.json")
+	Expect(err).NotTo(HaveOccurred())
+	defer file.Close()
+
+	Expect(json.NewDecoder(file).Decode(&settings.Config)).To(Succeed())
+
+	file, err = os.Open("../buildpack.toml")
+	Expect(err).NotTo(HaveOccurred())
+
+	_, err = toml.DecodeReader(file, &settings.Buildpack)
+	Expect(err).NotTo(HaveOccurred())
+
 	root, err := filepath.Abs("./..")
 	Expect(err).ToNot(HaveOccurred())
 
-	file, err := os.Open("../buildpack.toml")
-	Expect(err).NotTo(HaveOccurred())
-
-	_, err = toml.DecodeReader(file, &buildpackInfo)
-	Expect(err).NotTo(HaveOccurred())
-	Expect(file.Close()).To(Succeed())
-
-	file, err = os.Open("../integration.json")
-	Expect(err).NotTo(HaveOccurred())
-
-	Expect(json.NewDecoder(file).Decode(&config)).To(Succeed())
-	Expect(file.Close()).To(Succeed())
-
 	buildpackStore := occam.NewBuildpackStore()
 
-	buildpack, err = buildpackStore.Get.
+	settings.Buildpacks.NodeRunScript.Online, err = buildpackStore.Get.
 		WithVersion("1.2.3").
 		Execute(root)
 	Expect(err).NotTo(HaveOccurred())
 
-	offlineBuildpack, err = buildpackStore.Get.
-		WithOfflineDependencies().
-		WithVersion("1.2.3").
-		Execute(root)
+	settings.Buildpacks.NodeEngine.Online, err = buildpackStore.Get.
+		Execute(settings.Config.NodeEngine)
 	Expect(err).NotTo(HaveOccurred())
 
-	SetDefaultEventuallyTimeout(5 * time.Second)
+	settings.Buildpacks.Yarn.Online, err = buildpackStore.Get.
+		Execute(settings.Config.Yarn)
+	Expect(err).NotTo(HaveOccurred())
+
+	SetDefaultEventuallyTimeout(10 * time.Second)
 
 	suite := spec.New("Integration", spec.Report(report.Terminal{}), spec.Parallel())
-	suite("Default", testDefault)
+	suite("SimpleApp", testSimpleYarnApp)
 	suite.Run(t)
 }
