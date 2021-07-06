@@ -42,6 +42,10 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 			}`), 0644)).To(Succeed())
 
 		scriptManager = &fakes.PackageInterface{}
+		scriptManager.GetPackageScriptsCall.Returns.MapStringString = map[string]string{
+			"build":       "mybuildcommand --args",
+			"some-script": "somecommands --args",
+		}
 
 		detect = noderunscript.Detect(scriptManager)
 	})
@@ -53,6 +57,8 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 
 	context("when the working-dir contains yarn.lock", func() {
 		it("returns a plan that requires node and yarn", func() {
+			scriptManager.GetPackageManagerCall.Returns.String = "yarn"
+
 			Expect(os.WriteFile(filepath.Join(workingDir, "yarn.lock"), nil, 0644)).To(Succeed())
 
 			result, err := detect(packit.DetectContext{
@@ -69,6 +75,8 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 
 	context("when the working-dir doesn't contain yarn.lock", func() {
 		it("defaults to npm and returns a plan that requires node and npm", func() {
+			scriptManager.GetPackageManagerCall.Returns.String = "npm"
+
 			result, err := detect(packit.DetectContext{
 				WorkingDir: workingDir,
 			})
@@ -100,6 +108,7 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 
 		context("when the custom project path contains yarn.lock", func() {
 			it("returns a plan that requires node and yarn", func() {
+				scriptManager.GetPackageManagerCall.Returns.String = "yarn"
 
 				result, err := detect(packit.DetectContext{
 					WorkingDir: workingDir,
@@ -145,6 +154,9 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 
 		context("if any of the scripts in \"$BP_NODE_RUN_SCRIPTS\" does not exist in package.json", func() {
 			it.Before(func() {
+				scriptManager.GetPackageScriptsCall.Returns.MapStringString = map[string]string{
+					"some-script": "somecommands --args",
+				}
 				Expect(os.WriteFile(filepath.Join(workingDir, "package.json"), []byte(`
 					{
 						"name": "mypackage",

@@ -111,6 +111,12 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 			Expect(ioutil.WriteFile(filepath.Join(workingDir, "yarn.lock"), nil, 0644)).To(Succeed())
 			yarnExec.ExecuteCall.Returns.Error = nil
 
+			scriptManager.GetPackageManagerCall.Returns.String = "yarn"
+			scriptManager.GetPackageScriptsCall.Returns.MapStringString = map[string]string{
+				"build":       "mybuildcommand --args",
+				"some-script": "somecommands --args",
+			}
+
 			_, err := build(packit.BuildContext{
 				WorkingDir: workingDir,
 				CNBPath:    cnbDir,
