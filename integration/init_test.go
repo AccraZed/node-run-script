@@ -14,18 +14,9 @@ import (
 	"github.com/sclevine/spec/report"
 )
 
-var (
-	buildpack        string
-	offlineBuildpack string
-)
-
 var settings struct {
 	Buildpacks struct {
 		NodeEngine struct {
-			Online string
-		}
-
-		NPMInstall struct {
 			Online string
 		}
 
@@ -46,8 +37,6 @@ var settings struct {
 	}
 	Config struct {
 		NodeEngine string `json:"node-engine"`
-		NPMInstall string `json:"npm-install"`
-		NPMStart   string `json:"npm-start"`
 
 		Yarn        string `json:"yarn"`
 		YarnInstall string `json:"yarn-install"`
