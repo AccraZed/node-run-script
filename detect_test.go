@@ -174,5 +174,20 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 				Expect(err).To(MatchError("expected a script from $BP_NODE_RUN_SCRIPTS to exist in package.json"))
 			})
 		})
+
+		context("if $BP_NODE_PROJECT_PATH leads to a directory that doesn't exist", func() {
+			it.Before(func() {
+				os.Setenv("BP_NODE_PROJECT_PATH", "not_a_real_directory")
+			})
+
+			it("returns an error", func() {
+				_, err := detect(packit.DetectContext{
+					WorkingDir: workingDir,
+				})
+
+				Expect(err).To(MatchError("expected value from $BP_NODE_PROJECT_PATH [" + workingDir + "/not_a_real_directory] to be an existing directory"))
+			})
+
+		})
 	})
 }
