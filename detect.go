@@ -10,6 +10,10 @@ import (
 	"github.com/paketo-buildpacks/packit"
 )
 
+type BuildPlanMetadata struct {
+	Build bool `toml:"build"`
+}
+
 func Detect(scriptManager PackageInterface) packit.DetectFunc {
 	return func(context packit.DetectContext) (packit.DetectResult, error) {
 		envRunScripts, exists := os.LookupEnv("BP_NODE_RUN_SCRIPTS")
@@ -29,7 +33,8 @@ func Detect(scriptManager PackageInterface) packit.DetectFunc {
 		if err != nil {
 			if errors.Is(err, os.ErrNotExist) {
 				return packit.DetectResult{},
-					fmt.Errorf("expected value from $BP_NODE_PROJECT_PATH [%s] to be an existing directory", projectDir)
+					fmt.Errorf("expected value from $BP_NODE_PROJECT_PATH [%s] to be an existing directory",
+						projectDir)
 			}
 			return packit.DetectResult{}, err
 		}
@@ -59,7 +64,14 @@ func Detect(scriptManager PackageInterface) packit.DetectFunc {
 		return packit.DetectResult{
 			Plan: packit.BuildPlan{
 				Requires: []packit.BuildPlanRequirement{
-					{Name: "node"}, {Name: lockName},
+					{
+						Name:     "node",
+						Metadata: BuildPlanMetadata{Build: true},
+					},
+					{
+						Name:     lockName,
+						Metadata: BuildPlanMetadata{Build: true},
+					},
 				},
 			},
 		}, nil

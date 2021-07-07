@@ -67,7 +67,14 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(result.Plan).To(Equal(packit.BuildPlan{
 				Requires: []packit.BuildPlanRequirement{
-					{Name: "node"}, {Name: "yarn"},
+					{
+						Name:     "node",
+						Metadata: noderunscript.BuildPlanMetadata{Build: true},
+					},
+					{
+						Name:     "yarn",
+						Metadata: noderunscript.BuildPlanMetadata{Build: true},
+					},
 				},
 			}))
 		})
@@ -83,7 +90,14 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(result.Plan).To(Equal(packit.BuildPlan{
 				Requires: []packit.BuildPlanRequirement{
-					{Name: "node"}, {Name: "npm"},
+					{
+						Name:     "node",
+						Metadata: noderunscript.BuildPlanMetadata{Build: true},
+					},
+					{
+						Name:     "npm",
+						Metadata: noderunscript.BuildPlanMetadata{Build: true},
+					},
 				},
 			}))
 		})
@@ -116,7 +130,14 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 				Expect(err).NotTo(HaveOccurred())
 				Expect(result.Plan).To(Equal(packit.BuildPlan{
 					Requires: []packit.BuildPlanRequirement{
-						{Name: "node"}, {Name: "yarn"},
+						{
+							Name:     "node",
+							Metadata: noderunscript.BuildPlanMetadata{Build: true},
+						},
+						{
+							Name:     "yarn",
+							Metadata: noderunscript.BuildPlanMetadata{Build: true},
+						},
 					},
 				}))
 			})
