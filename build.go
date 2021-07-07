@@ -44,13 +44,7 @@ func Build(npmExec Executable, yarnExec Executable, scriptManager PackageInterfa
 			execution.Args[0] = "run"
 		}
 
-		envRunScripts, exists := os.LookupEnv("BP_NODE_RUN_SCRIPTS")
-		if !exists {
-			return packit.BuildResult{},
-				packit.Fail.WithMessage("expected value from $BP_NODE_RUN_SCRIPTS to be set")
-		}
-
-		scripts := strings.Split(envRunScripts, ",")
+		scripts := strings.Split(os.Getenv("BP_NODE_RUN_SCRIPTS"), ",")
 
 		logger.Process("Executing build process")
 		logger.Subprocess("Executing scripts")

@@ -1,6 +1,7 @@
 package noderunscript_test
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -21,9 +22,10 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 	var (
 		Expect = NewWithT(t).Expect
 
-		layersDir  string
-		workingDir string
-		cnbDir     string
+		layersDir   string
+		workingDir  string
+		projectPath string
+		cnbDir      string
 
 		build packit.BuildFunc
 
@@ -136,6 +138,87 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 			Expect(yarnExec.ExecuteCall.Receives.Execution.Args).To(
 				Equal([]string{"run", "some-script"}))
 			Expect(yarnExec.ExecuteCall.Receives.Execution.Dir).To(Equal(workingDir))
+		})
+	})
+
+	context("when there is a custom project path set", func() {
+		it.Before(func() {
+			var err error
+			projectPath, err = os.MkdirTemp(workingDir, "custom-project-path")
+			Expect(err).NotTo(HaveOccurred())
+
+			customPath := filepath.Base(projectPath)
+			os.Setenv("BP_NODE_PROJECT_PATH", customPath)
+
+			Expect(os.WriteFile(filepath.Join(workingDir, customPath, "yarn.lock"), nil, 0644)).To(Succeed())
+			Expect(os.WriteFile(filepath.Join(workingDir, customPath, "package.json"), []byte(`
+			{
+				"name": "mypackage",
+				"scripts": {
+					"build": "mybuildcommand --args"
+				}
+				}`), 0644)).To(Succeed())
+
+			os.Setenv("BP_NODE_RUN_SCRIPTS", "build")
+		})
+
+		it.After(func() {
+			os.Unsetenv("BP_NODE_PROJECT_PATH")
+		})
+
+		it("works and runs the correct commands", func() {
+			Expect(ioutil.WriteFile(filepath.Join(workingDir, "yarn.lock"), nil, 0644)).To(Succeed())
+			yarnExec.ExecuteCall.Returns.Error = nil
+
+			scriptManager.GetPackageManagerCall.Returns.String = "yarn"
+			scriptManager.GetPackageScriptsCall.Returns.MapStringString = map[string]string{
+				"build": "mybuildcommand --args",
+			}
+
+			_, err := build(packit.BuildContext{
+				WorkingDir: workingDir,
+				CNBPath:    cnbDir,
+				Stack:      "some-stack",
+				BuildpackInfo: packit.BuildpackInfo{
+					Name:    "Some Buildpack",
+					Version: "some-version",
+				},
+				Plan: packit.BuildpackPlan{
+					Entries: []packit.BuildpackPlanEntry{},
+				},
+				Layers: packit.Layers{Path: layersDir},
+			})
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(yarnExec.ExecuteCall.CallCount).To(Equal(1))
+			Expect(yarnExec.ExecuteCall.Receives.Execution.Args).To(
+				Equal([]string{"run", "build"}))
+			Expect(yarnExec.ExecuteCall.Receives.Execution.Dir).To(Equal(projectPath))
+		})
+	})
+
+	context("failure cases", func() {
+		context("when the script getting run has an error", func() {
+			it("returns an error", func() {
+				scriptManager.GetPackageManagerCall.Returns.String = "npm"
+				npmExec.ExecuteCall.Returns.Error = fmt.Errorf("some execute error")
+
+				_, err := build(packit.BuildContext{
+					WorkingDir: workingDir,
+					CNBPath:    cnbDir,
+					Stack:      "some-stack",
+					BuildpackInfo: packit.BuildpackInfo{
+						Name:    "Some Buildpack",
+						Version: "some-version",
+					},
+					Plan: packit.BuildpackPlan{
+						Entries: []packit.BuildpackPlanEntry{},
+					},
+					Layers: packit.Layers{Path: layersDir},
+				})
+
+				Expect(err).To(MatchError("some execute error"))
+			})
 		})
 	})
 }

@@ -63,7 +63,6 @@ func testScriptManager(t *testing.T, context spec.G, it spec.S) {
 
 					_, err := scriptManager.GetPackageScripts(workingDir)
 					Expect(err).To(HaveOccurred())
-
 				})
 			})
 			context("when package.json does not exist", func() {
