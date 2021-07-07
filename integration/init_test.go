@@ -23,9 +23,6 @@ var settings struct {
 		Yarn struct {
 			Online string
 		}
-		YarnInstall struct {
-			Online string
-		}
 
 		NodeRunScript struct {
 			Online string
@@ -37,9 +34,7 @@ var settings struct {
 	}
 	Config struct {
 		NodeEngine string `json:"node-engine"`
-
-		Yarn        string `json:"yarn"`
-		YarnInstall string `json:"yarn-install"`
+		Yarn       string `json:"yarn"`
 	}
 }
 
