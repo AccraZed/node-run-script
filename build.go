@@ -55,12 +55,11 @@ func Build(npmExec Executable, yarnExec Executable, scriptManager PackageInterfa
 				execution.Args[1] = script
 				err := mainExecutable.Execute(execution)
 
-				logger.Detail("%s", execBuffer)
-				execBuffer.Reset()
-
 				if err != nil {
+					logger.Detail("%s", execBuffer)
 					return err
 				}
+				execBuffer.Reset()
 			}
 			return nil
 		})

@@ -12,7 +12,7 @@ import (
 	. "github.com/paketo-buildpacks/occam/matchers"
 )
 
-func testSimpleYarnApp(t *testing.T, context spec.G, it spec.S) {
+func testProjectPathApp(t *testing.T, context spec.G, it spec.S) {
 	var (
 		Expect = NewWithT(t).Expect
 
@@ -23,7 +23,7 @@ func testSimpleYarnApp(t *testing.T, context spec.G, it spec.S) {
 		pack = occam.NewPack()
 	})
 
-	context("when building a simple yarn app", func() {
+	context("when building a simple yarn app inside a nested directory", func() {
 		var (
 			name   string
 			source string
@@ -35,9 +35,9 @@ func testSimpleYarnApp(t *testing.T, context spec.G, it spec.S) {
 			Expect(err).NotTo(HaveOccurred())
 		})
 
-		it("builds an OCI image for a simple yarn app", func() {
+		it("builds an OCI image for the app", func() {
 			var err error
-			source, err = occam.Source(filepath.Join("testdata", "simple_yarn_app"))
+			source, err = occam.Source(filepath.Join("testdata", "project_path_app"))
 			Expect(err).NotTo(HaveOccurred())
 
 			var logs fmt.Stringer
@@ -47,7 +47,9 @@ func testSimpleYarnApp(t *testing.T, context spec.G, it spec.S) {
 					settings.Buildpacks.Yarn.Online,
 					settings.Buildpacks.NodeRunScript.Online,
 				).
-				WithEnv(map[string]string{"BP_NODE_RUN_SCRIPTS": "test_script_1,test_script_2"}).
+				WithEnv(map[string]string{
+					"BP_NODE_RUN_SCRIPTS":  "test_script_1,test_script_2",
+					"BP_NODE_PROJECT_PATH": "nested_yarn_app"}).
 				WithPullPolicy("never").
 				Execute(name, source)
 			Expect(err).NotTo(HaveOccurred(), logs.String())
