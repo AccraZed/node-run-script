@@ -50,24 +50,23 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		workingDir, err = os.MkdirTemp("", "working-dir")
 		Expect(err).NotTo(HaveOccurred())
 
+		Expect(ioutil.WriteFile(filepath.Join(workingDir, "package.json"), nil, 0644)).To(Succeed())
 		os.Setenv("BP_NODE_RUN_SCRIPTS", "build,some-script")
-		Expect(ioutil.WriteFile(filepath.Join(workingDir, "package.json"), []byte(`
-			{
-				"name": "mypackage",
-				"scripts": {
-				   "build": "echo \"script build running!\"",
-				   "some-script": "echo \"script some-script running!\""
-				}
-			}`), 0644)).To(Succeed())
+
+		npmExec = &fakes.Executable{}
+		yarnExec = &fakes.Executable{}
+
+		scriptManager = &fakes.PackageInterface{}
+		scriptManager.GetPackageScriptsCall.Returns.MapStringString = map[string]string{
+			"build":       "echo \"script build running!\"",
+			"some-script": "echo \"script some-script running!\"",
+		}
 
 		timestamp = time.Now()
 		clock := chronos.NewClock(func() time.Time {
 			return timestamp
 		})
 
-		npmExec = &fakes.Executable{}
-		yarnExec = &fakes.Executable{}
-		scriptManager = &fakes.PackageInterface{}
 		loggerBuffer = bytes.NewBuffer(nil)
 		logger = scribe.NewLogger(loggerBuffer)
 
@@ -81,15 +80,11 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 	})
 
 	context("when there is no yarn.lock", func() {
-		it("runs npm commands", func() {
-			npmExec.ExecuteCall.Returns.Error = nil
-
+		it.Before(func() {
 			scriptManager.GetPackageManagerCall.Returns.String = "npm"
-			scriptManager.GetPackageScriptsCall.Returns.MapStringString = map[string]string{
-				"build":       "echo \"script build running!\"",
-				"some-script": "echo \"script some-script running!\"",
-			}
+		})
 
+		it("runs npm commands", func() {
 			_, err := build(packit.BuildContext{
 				WorkingDir: workingDir,
 				CNBPath:    cnbDir,
@@ -113,16 +108,12 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 	})
 
 	context("when there is a yarn.lock", func() {
-		it("runs yarn commands", func() {
+		it.Before(func() {
 			Expect(ioutil.WriteFile(filepath.Join(workingDir, "yarn.lock"), nil, 0644)).To(Succeed())
-			yarnExec.ExecuteCall.Returns.Error = nil
-
 			scriptManager.GetPackageManagerCall.Returns.String = "yarn"
-			scriptManager.GetPackageScriptsCall.Returns.MapStringString = map[string]string{
-				"build":       "echo \"script build running!\"",
-				"some-script": "echo \"script some-script running!\"",
-			}
+		})
 
+		it("runs yarn commands", func() {
 			_, err := build(packit.BuildContext{
 				WorkingDir: workingDir,
 				CNBPath:    cnbDir,
@@ -150,20 +141,14 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 			var err error
 			projectPath, err = os.MkdirTemp(workingDir, "custom-project-path")
 			Expect(err).NotTo(HaveOccurred())
-
 			customPath := filepath.Base(projectPath)
 			os.Setenv("BP_NODE_PROJECT_PATH", customPath)
 
 			Expect(os.WriteFile(filepath.Join(workingDir, customPath, "yarn.lock"), nil, 0644)).To(Succeed())
-			Expect(os.WriteFile(filepath.Join(workingDir, customPath, "package.json"), []byte(`
-			{
-				"name": "mypackage",
-				"scripts": {
-					"build": "mybuildcommand --args"
-				}
-				}`), 0644)).To(Succeed())
+			Expect(os.WriteFile(filepath.Join(workingDir, customPath, "package.json"), nil, 0644)).To(Succeed())
+			Expect(os.Remove(filepath.Join(workingDir, "package.json"))).To(Succeed())
 
-			os.Setenv("BP_NODE_RUN_SCRIPTS", "build")
+			scriptManager.GetPackageManagerCall.Returns.String = "yarn"
 		})
 
 		it.After(func() {
@@ -171,14 +156,6 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		})
 
 		it("works and runs the correct commands", func() {
-			Expect(ioutil.WriteFile(filepath.Join(workingDir, "yarn.lock"), nil, 0644)).To(Succeed())
-			yarnExec.ExecuteCall.Returns.Error = nil
-
-			scriptManager.GetPackageManagerCall.Returns.String = "yarn"
-			scriptManager.GetPackageScriptsCall.Returns.MapStringString = map[string]string{
-				"build": "mybuildcommand --args",
-			}
-
 			_, err := build(packit.BuildContext{
 				WorkingDir: workingDir,
 				CNBPath:    cnbDir,
@@ -194,24 +171,27 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 			})
 			Expect(err).NotTo(HaveOccurred())
 
-			Expect(yarnExec.ExecuteCall.CallCount).To(Equal(1))
+			Expect(yarnExec.ExecuteCall.CallCount).To(Equal(2))
 			Expect(yarnExec.ExecuteCall.Receives.Execution.Args).To(
-				Equal([]string{"run", "build"}))
+				Equal([]string{"run", "some-script"}))
 			Expect(yarnExec.ExecuteCall.Receives.Execution.Dir).To(Equal(projectPath))
 		})
 	})
 
 	context("failure cases", func() {
 		context("when the script getting run has an error", func() {
-			it("returns an error", func() {
+			it.Before(func() {
 				scriptManager.GetPackageManagerCall.Returns.String = "npm"
+
 				npmExec.ExecuteCall.Stub = func(execution pexec.Execution) error {
 					fmt.Fprintln(execution.Stdout, "some stdout output")
 					fmt.Fprintln(execution.Stderr, "some stderr output")
 
 					return fmt.Errorf("some execute error")
 				}
+			})
 
+			it("returns an error", func() {
 				_, err := build(packit.BuildContext{
 					WorkingDir: workingDir,
 					CNBPath:    cnbDir,

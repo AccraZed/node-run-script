@@ -52,11 +52,20 @@ func Detect(scriptManager PackageInterface) packit.DetectFunc {
 
 		envScripts := strings.Split(envRunScripts, ",")
 
+		var missingScripts []string
 		for _, envScript := range envScripts {
 			if _, exists := packageScripts[envScript]; !exists {
-				return packit.DetectResult{},
-					fmt.Errorf("expected a script from $BP_NODE_RUN_SCRIPTS to exist in package.json")
+				missingScripts = append(missingScripts, envScript)
 			}
+		}
+		if len(missingScripts) > 0 {
+			quotedStr := fmt.Sprintf("%q", missingScripts) // ["scr1" "scr2" "scr3"]
+			quotedSplit := strings.Split(quotedStr, " ")   //
+			output := strings.Join(quotedSplit, ", ")      // ["scr1", "scr2", "scr3"]
+
+			return packit.DetectResult{},
+				fmt.Errorf("expected script(s) %s from $BP_NODE_RUN_SCRIPTS to exist in package.json",
+					output)
 		}
 
 		packageManager := scriptManager.GetPackageManager(projectDir)
