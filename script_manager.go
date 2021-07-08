@@ -8,8 +8,8 @@ import (
 
 //go:generate faux --interface PackageInterface -o fakes/package_interface.go
 type PackageInterface interface {
-	GetPackageScripts(workingDir string) (map[string]string, error)
-	GetPackageManager(workingDir string) string
+	GetPackageScripts(path string) (map[string]string, error)
+	GetPackageManager(path string) string
 }
 
 type ScriptManager struct{}
@@ -18,8 +18,8 @@ func CreateScriptManager() *ScriptManager {
 	return &ScriptManager{}
 }
 
-func (s *ScriptManager) GetPackageScripts(workingDir string) (map[string]string, error) {
-	packageJSONFile, err := os.ReadFile(filepath.Join(workingDir, "package.json"))
+func (s *ScriptManager) GetPackageScripts(path string) (map[string]string, error) {
+	packageJSONFile, err := os.ReadFile(filepath.Join(path, "package.json"))
 	if err != nil {
 		return nil, err
 	}
@@ -36,8 +36,8 @@ func (s *ScriptManager) GetPackageScripts(workingDir string) (map[string]string,
 	return packageJSON.Scripts, nil
 }
 
-func (s *ScriptManager) GetPackageManager(workingDir string) string {
-	_, err := os.Stat(filepath.Join(workingDir, "yarn.lock"))
+func (s *ScriptManager) GetPackageManager(path string) string {
+	_, err := os.Stat(filepath.Join(path, "yarn.lock"))
 	if err == nil {
 		return "yarn"
 	}
