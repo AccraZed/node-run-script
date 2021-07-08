@@ -1,6 +1,7 @@
 package noderunscript_test
 
 import (
+	"bytes"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -12,6 +13,7 @@ import (
 	"github.com/accrazed/node-run-script/fakes"
 	"github.com/paketo-buildpacks/packit"
 	"github.com/paketo-buildpacks/packit/chronos"
+	"github.com/paketo-buildpacks/packit/pexec"
 	"github.com/paketo-buildpacks/packit/scribe"
 	"github.com/sclevine/spec"
 
@@ -31,6 +33,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 
 		timestamp     time.Time
 		logger        scribe.Logger
+		loggerBuffer  *bytes.Buffer
 		npmExec       *fakes.Executable
 		yarnExec      *fakes.Executable
 		scriptManager *fakes.PackageInterface
@@ -65,7 +68,8 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		npmExec = &fakes.Executable{}
 		yarnExec = &fakes.Executable{}
 		scriptManager = &fakes.PackageInterface{}
-		logger = scribe.NewLogger(os.Stdout)
+		loggerBuffer = bytes.NewBuffer(nil)
+		logger = scribe.NewLogger(loggerBuffer)
 
 		build = noderunscript.Build(npmExec, yarnExec, scriptManager, clock, logger)
 	})
@@ -201,7 +205,12 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		context("when the script getting run has an error", func() {
 			it("returns an error", func() {
 				scriptManager.GetPackageManagerCall.Returns.String = "npm"
-				npmExec.ExecuteCall.Returns.Error = fmt.Errorf("some execute error")
+				npmExec.ExecuteCall.Stub = func(execution pexec.Execution) error {
+					fmt.Fprintln(execution.Stdout, "some stdout output")
+					fmt.Fprintln(execution.Stderr, "some stderr output")
+
+					return fmt.Errorf("some execute error")
+				}
 
 				_, err := build(packit.BuildContext{
 					WorkingDir: workingDir,
@@ -217,6 +226,8 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 					Layers: packit.Layers{Path: layersDir},
 				})
 
+				Expect(loggerBuffer.String()).To(ContainSubstring("some stdout output"))
+				Expect(loggerBuffer.String()).To(ContainSubstring("some stderr output"))
 				Expect(err).To(MatchError("some execute error"))
 			})
 		})

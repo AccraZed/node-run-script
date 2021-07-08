@@ -1,0 +1,10 @@
+{
+  "description": "some npm app",
+  "license": "MIT",
+  "name": "simple_npm_app",
+  "scripts": {
+    "test_script_1": "echo \"some commands\"",
+    "test_script_2": "echo \"some other commands\""
+  },
+  "version": "0.0.0"
+}
