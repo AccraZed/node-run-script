@@ -23,12 +23,12 @@ func Detect(scriptManager PackageInterface) packit.DetectFunc {
 		}
 
 		projectDir := context.WorkingDir
-		bpNodeProjectPath, exists := os.LookupEnv("BP_NODE_PROJECT_PATH")
+		envProjectPath, exists := os.LookupEnv("BP_NODE_PROJECT_PATH")
 		if exists {
-			projectDir = filepath.Join(context.WorkingDir, bpNodeProjectPath)
+			projectDir = filepath.Join(context.WorkingDir, envProjectPath)
 		}
-
 		projectDir = filepath.Clean(projectDir)
+
 		_, err := os.Stat(projectDir)
 		if err != nil {
 			if errors.Is(err, os.ErrNotExist) {
@@ -50,16 +50,16 @@ func Detect(scriptManager PackageInterface) packit.DetectFunc {
 			return packit.DetectResult{}, err
 		}
 
-		envScriptNames := strings.Split(envRunScripts, ",")
+		envScripts := strings.Split(envRunScripts, ",")
 
-		for _, envScriptName := range envScriptNames {
-			if _, exists := packageScripts[envScriptName]; !exists {
+		for _, envScript := range envScripts {
+			if _, exists := packageScripts[envScript]; !exists {
 				return packit.DetectResult{},
 					fmt.Errorf("expected a script from $BP_NODE_RUN_SCRIPTS to exist in package.json")
 			}
 		}
 
-		lockName := scriptManager.GetPackageManager(projectDir)
+		packageManager := scriptManager.GetPackageManager(projectDir)
 
 		return packit.DetectResult{
 			Plan: packit.BuildPlan{
@@ -69,7 +69,7 @@ func Detect(scriptManager PackageInterface) packit.DetectFunc {
 						Metadata: BuildPlanMetadata{Build: true},
 					},
 					{
-						Name:     lockName,
+						Name:     packageManager,
 						Metadata: BuildPlanMetadata{Build: true},
 					},
 				},

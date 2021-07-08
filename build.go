@@ -23,41 +23,40 @@ func Build(npmExec Executable, yarnExec Executable, scriptManager PackageInterfa
 		logger.Title("%s %s", context.BuildpackInfo.Name, context.BuildpackInfo.Version)
 
 		projectDir := context.WorkingDir
-		bpNodeProjectPath, exists := os.LookupEnv("BP_NODE_PROJECT_PATH")
+		envProjectPath, exists := os.LookupEnv("BP_NODE_PROJECT_PATH")
 		if exists {
-			projectDir = filepath.Join(context.WorkingDir, bpNodeProjectPath)
+			projectDir = filepath.Join(context.WorkingDir, envProjectPath)
 		}
 
-		buffer := bytes.NewBuffer(nil)
+		execBuffer := bytes.NewBuffer(nil)
 		mainExecutable := npmExec
 		execution := pexec.Execution{
 			Dir:    projectDir,
 			Args:   []string{"run-script", ""},
-			Stdout: buffer,
-			Stderr: buffer,
+			Stdout: execBuffer,
+			Stderr: execBuffer,
 		}
 
 		packageManager := scriptManager.GetPackageManager(projectDir)
-
 		if packageManager == "yarn" {
 			mainExecutable = yarnExec
 			execution.Args[0] = "run"
 		}
 
-		scripts := strings.Split(os.Getenv("BP_NODE_RUN_SCRIPTS"), ",")
+		envScripts := strings.Split(os.Getenv("BP_NODE_RUN_SCRIPTS"), ",")
 
 		logger.Process("Executing build process")
 		logger.Subprocess("Executing scripts")
 
 		duration, err := clock.Measure(func() error {
-			for _, script := range scripts {
+			for _, script := range envScripts {
 				logger.Action("Running '%s %s %s'", packageManager, execution.Args[0], script)
 
 				execution.Args[1] = script
 				err := mainExecutable.Execute(execution)
 
-				logger.Detail("%s", buffer)
-				buffer.Reset()
+				logger.Detail("%s", execBuffer)
+				execBuffer.Reset()
 
 				if err != nil {
 					return err

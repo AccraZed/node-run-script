@@ -7,7 +7,7 @@ type PackageInterface struct {
 		sync.Mutex
 		CallCount int
 		Receives  struct {
-			WorkingDir string
+			Path string
 		}
 		Returns struct {
 			String string
@@ -18,7 +18,7 @@ type PackageInterface struct {
 		sync.Mutex
 		CallCount int
 		Receives  struct {
-			WorkingDir string
+			Path string
 		}
 		Returns struct {
 			MapStringString map[string]string
@@ -32,7 +32,7 @@ func (f *PackageInterface) GetPackageManager(param1 string) string {
 	f.GetPackageManagerCall.Lock()
 	defer f.GetPackageManagerCall.Unlock()
 	f.GetPackageManagerCall.CallCount++
-	f.GetPackageManagerCall.Receives.WorkingDir = param1
+	f.GetPackageManagerCall.Receives.Path = param1
 	if f.GetPackageManagerCall.Stub != nil {
 		return f.GetPackageManagerCall.Stub(param1)
 	}
@@ -42,7 +42,7 @@ func (f *PackageInterface) GetPackageScripts(param1 string) (map[string]string, 
 	f.GetPackageScriptsCall.Lock()
 	defer f.GetPackageScriptsCall.Unlock()
 	f.GetPackageScriptsCall.CallCount++
-	f.GetPackageScriptsCall.Receives.WorkingDir = param1
+	f.GetPackageScriptsCall.Receives.Path = param1
 	if f.GetPackageScriptsCall.Stub != nil {
 		return f.GetPackageScriptsCall.Stub(param1)
 	}
