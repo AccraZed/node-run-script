@@ -20,11 +20,23 @@ var settings struct {
 			Online string
 		}
 
+		NpmInstall struct {
+			Online string
+		}
+
 		Yarn struct {
 			Online string
 		}
 
+		YarnInstall struct {
+			Online string
+		}
+
 		NodeRunScript struct {
+			Online string
+		}
+
+		BuildPlan struct {
 			Online string
 		}
 	}
@@ -33,8 +45,11 @@ var settings struct {
 		Name string
 	}
 	Config struct {
-		NodeEngine string `json:"node-engine"`
-		Yarn       string `json:"yarn"`
+		NodeEngine  string `json:"node-engine"`
+		NpmInstall  string `json:"npm-install"`
+		Yarn        string `json:"yarn"`
+		YarnInstall string `json:"yarn-install"`
+		BuildPlan   string `json:"buildplan"`
 	}
 }
 
@@ -67,8 +82,20 @@ func TestIntegration(t *testing.T) {
 		Execute(settings.Config.NodeEngine)
 	Expect(err).NotTo(HaveOccurred())
 
+	settings.Buildpacks.NpmInstall.Online, err = buildpackStore.Get.
+		Execute(settings.Config.NpmInstall)
+	Expect(err).NotTo(HaveOccurred())
+
 	settings.Buildpacks.Yarn.Online, err = buildpackStore.Get.
 		Execute(settings.Config.Yarn)
+	Expect(err).NotTo(HaveOccurred())
+
+	settings.Buildpacks.YarnInstall.Online, err = buildpackStore.Get.
+		Execute(settings.Config.YarnInstall)
+	Expect(err).NotTo(HaveOccurred())
+
+	settings.Buildpacks.BuildPlan.Online, err = buildpackStore.Get.
+		Execute(settings.Config.BuildPlan)
 	Expect(err).NotTo(HaveOccurred())
 
 	SetDefaultEventuallyTimeout(10 * time.Second)
@@ -77,5 +104,7 @@ func TestIntegration(t *testing.T) {
 	suite("SimpleYarnApp", testSimpleYarnApp)
 	suite("SimpleNPMApp", testSimpleNPMApp)
 	suite("ProjectPathApp", testProjectPathApp)
+	suite("VueNpmApp", testVueNpmApp)
+	suite("VueYarnApp", testVueYarnApp)
 	suite.Run(t)
 }

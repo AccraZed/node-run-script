@@ -1,4 +1,8 @@
 {
   "node-engine": "github.com/paketo-buildpacks/node-engine",
-  "yarn": "github.com/paketo-buildpacks/yarn"
+  "npm-install": "github.com/paketo-buildpacks/npm-install",
+  "yarn": "github.com/paketo-buildpacks/yarn",
+  "yarn-install": "github.com/paketo-buildpacks/yarn-install",
+
+  "buildplan": "github.com/ForestEckhardt/build-plan"
 }
