@@ -79,7 +79,7 @@ func testVueYarnApp(t *testing.T, context spec.G, it spec.S) {
 			Expect(logs).To(ContainLines(MatchRegexp(`      Completed in ([0-9]*(\.[0-9]*)?[a-z]+)+`)))
 
 			container, err = docker.Container.Run.
-				WithCommand("ls -al /workspace/").
+				WithCommand("ls -al /workspace/dist/").
 				Execute(image.ID)
 			Expect(err).NotTo(HaveOccurred())
 
@@ -87,7 +87,7 @@ func testVueYarnApp(t *testing.T, context spec.G, it spec.S) {
 				cLogs, err := docker.Container.Logs.Execute(container.ID)
 				Expect(err).NotTo(HaveOccurred())
 				return cLogs.String()
-			}).Should(ContainSubstring("dist"))
+			}).Should(ContainSubstring("index.html"))
 		})
 	})
 }

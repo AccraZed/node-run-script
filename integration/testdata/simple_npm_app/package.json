@@ -4,7 +4,7 @@
   "name": "simple_npm_app",
   "scripts": {
     "test_script_1": "echo \"some commands\"",
-    "test_script_2": "echo \"some other commands\""
+    "test_script_2": "touch dummyfile.txt"
   },
   "version": "0.0.0"
 }
