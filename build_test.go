@@ -50,7 +50,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		Expect(err).NotTo(HaveOccurred())
 
 		Expect(os.WriteFile(filepath.Join(workingDir, "package.json"), nil, 0644)).To(Succeed())
-		os.Setenv("BP_NODE_RUN_SCRIPTS", "build,some-script")
+		Expect(os.Setenv("BP_NODE_RUN_SCRIPTS", "build,some-script")).To(Succeed())
 
 		npmExec = &fakes.Executable{}
 		yarnExec = &fakes.Executable{}
@@ -138,7 +138,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 	context("when env var $BP_NODE_RUN_SCRIPTS has spaces among commas", func() {
 		it.Before(func() {
 			scriptManager.GetPackageManagerCall.Returns.String = "npm"
-			os.Setenv("BP_NODE_RUN_SCRIPTS", "build, some-script ")
+			Expect(os.Setenv("BP_NODE_RUN_SCRIPTS", "build, some-script ")).To(Succeed())
 		})
 
 		it("trims the whitespace and successfully detects the scripts", func() {
@@ -169,7 +169,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 			projectPath, err = os.MkdirTemp(workingDir, "custom-project-path")
 			Expect(err).NotTo(HaveOccurred())
 			customPath := filepath.Base(projectPath)
-			os.Setenv("BP_NODE_PROJECT_PATH", customPath)
+			Expect(os.Setenv("BP_NODE_PROJECT_PATH", customPath)).To(Succeed())
 
 			Expect(os.WriteFile(filepath.Join(workingDir, customPath, "yarn.lock"), nil, 0644)).To(Succeed())
 			Expect(os.WriteFile(filepath.Join(workingDir, customPath, "package.json"), nil, 0644)).To(Succeed())
@@ -179,7 +179,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		})
 
 		it.After(func() {
-			os.Unsetenv("BP_NODE_PROJECT_PATH")
+			Expect(os.Unsetenv("BP_NODE_PROJECT_PATH")).To(Succeed())
 		})
 
 		it("works and runs the correct commands", func() {

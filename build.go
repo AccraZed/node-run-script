@@ -18,6 +18,12 @@ type Executable interface {
 	Execute(execution pexec.Execution) error
 }
 
+//go:generate faux --interface PackageInterface -o fakes/package_interface.go
+type PackageInterface interface {
+	GetPackageScripts(path string) (map[string]string, error)
+	GetPackageManager(path string) string
+}
+
 func Build(npmExec Executable, yarnExec Executable, scriptManager PackageInterface, clock chronos.Clock, logger scribe.Logger) packit.BuildFunc {
 	return func(context packit.BuildContext) (packit.BuildResult, error) {
 		logger.Title("%s %s", context.BuildpackInfo.Name, context.BuildpackInfo.Version)
