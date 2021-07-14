@@ -13,7 +13,7 @@ import (
 func main() {
 	npmExec := pexec.NewExecutable("npm")
 	yarnExec := pexec.NewExecutable("yarn")
-	scriptManager := noderunscript.CreateScriptManager()
+	scriptManager := noderunscript.NewScriptManager()
 	logger := scribe.NewLogger(os.Stdout)
 
 	packit.Run(

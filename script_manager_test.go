@@ -24,7 +24,7 @@ func testScriptManager(t *testing.T, context spec.G, it spec.S) {
 		workingDir, err = os.MkdirTemp("", "working-dir")
 		Expect(err).NotTo(HaveOccurred())
 
-		scriptManager = noderunscript.CreateScriptManager()
+		scriptManager = noderunscript.NewScriptManager()
 	})
 
 	it.After(func() {

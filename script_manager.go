@@ -6,15 +6,9 @@ import (
 	"path/filepath"
 )
 
-//go:generate faux --interface PackageInterface -o fakes/package_interface.go
-type PackageInterface interface {
-	GetPackageScripts(path string) (map[string]string, error)
-	GetPackageManager(path string) string
-}
-
 type ScriptManager struct{}
 
-func CreateScriptManager() *ScriptManager {
+func NewScriptManager() *ScriptManager {
 	return &ScriptManager{}
 }
 
