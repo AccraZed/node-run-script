@@ -78,6 +78,10 @@ func Detect(scriptManager PackageInterface) packit.DetectFunc {
 						Name:     packageManager,
 						Metadata: BuildPlanMetadata{Build: true},
 					},
+					{
+						Name:     "node_modules",
+						Metadata: BuildPlanMetadata{Build: true},
+					},
 				},
 			},
 		}, nil

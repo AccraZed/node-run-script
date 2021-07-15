@@ -35,10 +35,6 @@ var settings struct {
 		NodeRunScript struct {
 			Online string
 		}
-
-		BuildPlan struct {
-			Online string
-		}
 	}
 	Buildpack struct {
 		ID   string
@@ -49,7 +45,6 @@ var settings struct {
 		NpmInstall  string `json:"npm-install"`
 		Yarn        string `json:"yarn"`
 		YarnInstall string `json:"yarn-install"`
-		BuildPlan   string `json:"buildplan"`
 	}
 }
 
@@ -92,10 +87,6 @@ func TestIntegration(t *testing.T) {
 
 	settings.Buildpacks.YarnInstall.Online, err = buildpackStore.Get.
 		Execute(settings.Config.YarnInstall)
-	Expect(err).NotTo(HaveOccurred())
-
-	settings.Buildpacks.BuildPlan.Online, err = buildpackStore.Get.
-		Execute(settings.Config.BuildPlan)
 	Expect(err).NotTo(HaveOccurred())
 
 	SetDefaultEventuallyTimeout(10 * time.Second)

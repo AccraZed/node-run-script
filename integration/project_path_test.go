@@ -59,6 +59,7 @@ func testProjectPathApp(t *testing.T, context spec.G, it spec.S) {
 				WithBuildpacks(
 					settings.Buildpacks.NodeEngine.Online,
 					settings.Buildpacks.Yarn.Online,
+					settings.Buildpacks.YarnInstall.Online,
 					settings.Buildpacks.NodeRunScript.Online,
 				).
 				WithEnv(map[string]string{

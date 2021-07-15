@@ -60,7 +60,6 @@ func testVueNpmApp(t *testing.T, context spec.G, it spec.S) {
 					settings.Buildpacks.NodeEngine.Online,
 					settings.Buildpacks.NpmInstall.Online,
 					settings.Buildpacks.NodeRunScript.Online,
-					settings.Buildpacks.BuildPlan.Online,
 				).
 				WithEnv(map[string]string{
 					"BP_NODE_RUN_SCRIPTS": "build",

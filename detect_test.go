@@ -65,6 +65,10 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 						Name:     "npm",
 						Metadata: noderunscript.BuildPlanMetadata{Build: true},
 					},
+					{
+						Name:     "node_modules",
+						Metadata: noderunscript.BuildPlanMetadata{Build: true},
+					},
 				},
 			}))
 		})
@@ -89,6 +93,10 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 					},
 					{
 						Name:     "yarn",
+						Metadata: noderunscript.BuildPlanMetadata{Build: true},
+					},
+					{
+						Name:     "node_modules",
 						Metadata: noderunscript.BuildPlanMetadata{Build: true},
 					},
 				},
@@ -145,6 +153,10 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 						},
 						{
 							Name:     "yarn",
+							Metadata: noderunscript.BuildPlanMetadata{Build: true},
+						},
+						{
+							Name:     "node_modules",
 							Metadata: noderunscript.BuildPlanMetadata{Build: true},
 						},
 					},

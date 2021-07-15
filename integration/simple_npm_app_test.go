@@ -58,6 +58,7 @@ func testSimpleNPMApp(t *testing.T, context spec.G, it spec.S) {
 			image, logs, err = pack.WithNoColor().Build.
 				WithBuildpacks(
 					settings.Buildpacks.NodeEngine.Online,
+					settings.Buildpacks.NpmInstall.Online,
 					settings.Buildpacks.NodeRunScript.Online,
 				).
 				WithEnv(map[string]string{"BP_NODE_RUN_SCRIPTS": "test_script_1,test_script_2"}).

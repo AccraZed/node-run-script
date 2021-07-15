@@ -61,7 +61,6 @@ func testVueYarnApp(t *testing.T, context spec.G, it spec.S) {
 					settings.Buildpacks.Yarn.Online,
 					settings.Buildpacks.YarnInstall.Online,
 					settings.Buildpacks.NodeRunScript.Online,
-					settings.Buildpacks.BuildPlan.Online,
 				).
 				WithEnv(map[string]string{
 					"BP_NODE_RUN_SCRIPTS": "build",
